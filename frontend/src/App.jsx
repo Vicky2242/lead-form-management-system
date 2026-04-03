@@ -1,12 +1,20 @@
-import React from 'react'
-import ContactForm from './components/ContactForm'
+import ContactForm from "./components/ContactForm";
+import LeadsList from "./components/LeadsList";
+import dummyLeads from "./data/dummyLeads";
 
-const App = () => {
+function App() {
   return (
-    <div>
+    <div style={styles.appContainer}>
       <ContactForm />
+      <LeadsList leads={dummyLeads} />
     </div>
-  )
+  );
 }
 
-export default App
+const styles = {
+  appContainer: {
+    padding: "20px",
+  },
+};
+
+export default App;

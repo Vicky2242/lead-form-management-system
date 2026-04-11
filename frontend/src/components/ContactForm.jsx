@@ -1,4 +1,5 @@
 import { useState } from "react";
+import axios from "axios";
 
 function ContactForm() {
   const [formData, setFormData] = useState({
@@ -7,6 +8,9 @@ function ContactForm() {
     phone: "",
     file: null,
   });
+
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -18,16 +22,68 @@ function ContactForm() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form Data:", formData);
-    alert("Frontend ready! API integration on Day 3.");
+
+    if (!formData.name || !formData.email || !formData.phone || !formData.file) {
+      setMessage("Please fill all fields and upload a file.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setMessage("");
+
+      const data = new FormData();
+      data.append("name", formData.name);
+      data.append("email", formData.email);
+      data.append("phone", formData.phone);
+      data.append("file", formData.file);
+
+      const response = await axios.post("http://localhost:5000/api/leads", data, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (response.data.success) {
+        setMessage("Lead submitted successfully!");
+
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          file: null,
+        });
+
+        // Reset file input manually
+        document.getElementById("fileInput").value = "";
+      }
+    } catch (error) {
+      console.error("Submit Error:", error);
+      setMessage(
+        error.response?.data?.message || "Failed to submit lead. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div style={styles.container}>
       <h1 style={styles.heading}>Lead / Contact Form</h1>
       <p style={styles.subText}>Submit your details and upload a document.</p>
+
+      {message && (
+        <p
+          style={{
+            ...styles.message,
+            color: message.includes("successfully") ? "green" : "red",
+          }}
+        >
+          {message}
+        </p>
+      )}
 
       <form onSubmit={handleSubmit} style={styles.form}>
         <div style={styles.formGroup}>
@@ -72,6 +128,7 @@ function ContactForm() {
         <div style={styles.formGroup}>
           <label style={styles.label}>Upload File</label>
           <input
+            id="fileInput"
             type="file"
             name="file"
             onChange={handleChange}
@@ -80,8 +137,8 @@ function ContactForm() {
           />
         </div>
 
-        <button type="submit" style={styles.button}>
-          Submit Lead
+        <button type="submit" style={styles.button} disabled={loading}>
+          {loading ? "Submitting..." : "Submit Lead"}
         </button>
       </form>
     </div>
@@ -107,6 +164,11 @@ const styles = {
     marginBottom: "24px",
     color: "#6b7280",
     fontSize: "14px",
+  },
+  message: {
+    textAlign: "center",
+    marginBottom: "16px",
+    fontWeight: "600",
   },
   form: {
     display: "flex",
